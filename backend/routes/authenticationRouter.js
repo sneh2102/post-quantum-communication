@@ -11,8 +11,4 @@ router.get('/confirmation/:token', confirmation);
 router.get('/logout',logout);
 
 // Export the router
-module.exports = router;
-
-
-
-
+module.exports = router; 
