@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
+    gender: {
+        type: String,
+        default: "",
+    },  
     birthday: {
         type: Date,
         default: null,
@@ -36,10 +40,14 @@ const userSchema = new mongoose.Schema({
     friends: {
         type: Array,
         default: [],
-    }
+    },
+    confirmationStatus: {
+        type: Boolean,
+        default: false,
+    },
 }, {
     timestamps: true,
 });
 
 const User = mongoose.model('User', userSchema);
-export default User;
+module.exports = User;
