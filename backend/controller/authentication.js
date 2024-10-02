@@ -100,8 +100,8 @@ async function login(req, res) {
     }
     
     if (user){
-      await generateTokenAndSetCookie(email, res);
-      res.status(200).json({id, email, username: user.username, profilePicture: user.profilePicture});
+      await generateTokenAndSetCookie(id, res);
+      res.status(200).json({email, username: user.username, profilePicture: user.profilePicture});
     }
     
 }
