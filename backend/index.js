@@ -8,11 +8,12 @@ const port = process.env.PORT;
 const socketio = require('socket.io');
 const server = require('http').Server(app);
 const io = socketio(server);
+const cookies = require('cookie-parser');
 
 // Middleware to parse JSON bodies
 app.use(express.json());  
 app.use(express.urlencoded({ extended: true }));
-
+app.use(cookies());
 app.use(cors({
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],  
