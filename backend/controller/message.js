@@ -1,12 +1,14 @@
 const Conversation = require('../models/converstaion');
 const Message = require('../models/messages');
+const { getReceiverSocketId, io } = require('../socke.io/socket');
 
 async function sendMessage(req, res) {
     try {
         const { id: receiverId } = req.params;
         const senderId = req.user._id;
         const { message } = req.body;
-
+        console.log(req.body);
+        console.log(req.params);
         // Find existing conversation or create a new one
         let conversation = await Conversation.findOne({
             participants: { $all: [senderId, receiverId] },
@@ -31,7 +33,15 @@ async function sendMessage(req, res) {
             conversation.messages.push(newMessage._id);
         }
 
+
+
+
         await Promise.all([conversation.save(), newMessage.save()]);
+
+        const receiverSocketId = getReceiverSocketId(receiverId);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('newMessage', newMessage);
+        }
 
         // Return the newly created message in the response
         res.status(200).json({ success: true, data: newMessage });
@@ -44,6 +54,7 @@ async function getMessages(req, res) {
     try {
         const { id: receiverId } = req.params;
         const senderId = req.user._id;
+        console.log(req.params);
 
         // Find existing conversation
         const conversation = await Conversation.findOne({

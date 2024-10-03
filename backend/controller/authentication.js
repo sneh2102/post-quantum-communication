@@ -35,7 +35,7 @@ async function register(req, res) {
           await user.save();
 
           const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "20m" });
-          const url = `http://localhost:5000/api/v1/confirmation/${token}`;
+          const url = `http://localhost:5000/api/v1/auth/confirmation/${token}`;
           const subject = "Email Confirmation"; 
           const content = `Please click this link to confirm your email: <a href="${url}">${url}</a>`;
 
@@ -80,30 +80,46 @@ async function confirmation(req, res) {
 }
 
 async function login(req, res) { 
-  const { email, password } = req.body;
-    if (email === "" || password === "") {
-      res.status(400).send("All input is required");
+  try {
+    const { email, password } = req.body;
+
+    // Check if email or password is empty
+    if (!email || !password) {
+      return res.status(400).send("All input is required");  // Return here to stop further execution
     }
-    console.log(email, password);
-    const user = await User.findOne({email: email});
-    console.log(user);
-    const id = user._id;
+
+    const user = await User.findOne({ email });
+
+    // Check if user exists
     if (!user) {
-      res.status(400).send("User does not exist");
+      return res.status(400).send("User does not exist");  // Return here
     }
+
+    // Check if email is confirmed
     if (!user.confirmationStatus) {
-      res.status(400).send("Email not confirmed");
+      return res.status(400).send("Email not confirmed");  // Return here
     }
-    const valid = bcrypt.compare(password, user.password) 
+
+    // Check if password is valid
+    const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-      res.status(400).send("Invalid password");
+      return res.status(400).json({ error: "Invalid password" });  // Return here
     }
-    
-    if (user){
-      await generateTokenAndSetCookie(id, res);
-      res.status(200).json({email, username: user.username, profilePicture: user.profilePicture});
-    }
-    
+
+    // If all checks pass, generate the token and send a response
+    const token = generateTokenAndSetCookie(user._id, res);
+    return res.status(200).json({
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      profilePicture: user.profilePicture,
+      token: token, // Sending token is optional since it's in the cookie
+    });
+
+  } catch (err) {
+    console.error(err);  // For debugging
+    return res.status(500).send("Server error");
+  }
 }
 
 

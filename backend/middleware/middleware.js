@@ -4,15 +4,11 @@ const User = require("../models/user")
 const middleware = async (req,res,next) => {
     try {
     const token = req.cookies.access_token;
-    console.log(token);
     if (!token) { 
         return res.status(401).json({ success: false, msg: "No token, authorization denied" });
     }
-
     const decode = jwt.verify(token, process.env.JWT_SECRET);
-    console.log(decode);
     const user = await User.findById(decode.id).select("-password");
-    console.log("User- ",user)
     if (!user) {
         return res.status(401).json({ success: false, msg: "Token is not valid" });
     }
