@@ -7,8 +7,7 @@ async function sendMessage(req, res) {
         const { id: receiverId } = req.params;
         const senderId = req.user._id;
         const { message } = req.body;
-        console.log(req.body);
-        console.log(req.params);
+        console.log("Params: ", req.params);
         // Find existing conversation or create a new one
         let conversation = await Conversation.findOne({
             participants: { $all: [senderId, receiverId] },
@@ -52,9 +51,11 @@ async function sendMessage(req, res) {
 
 async function getMessages(req, res) {
     try {
+
         const { id: receiverId } = req.params;
         const senderId = req.user._id;
-        console.log(req.params);
+        console.log("Params: ", req.params);
+        console.log("Usre id :",req.user._id);
 
         // Find existing conversation
         const conversation = await Conversation.findOne({

@@ -7,6 +7,8 @@ import  Home  from './pages/Home/Home'
 import { Toaster } from 'react-hot-toast'
 import { AuthContext } from './context/auth'
 
+import Analysis from './pages/Analysis/Analysis'
+
 function App() {
 
   const { auth } = useContext(AuthContext)
@@ -23,6 +25,7 @@ useEffect(() => {
               <Route path="/" element={auth?<Home />:<Login/>} />
               <Route path="/login" element={auth?<Home/>:<Login />} />
               <Route path="/signup" element={auth?<Home/>:<SignUp/>} />
+              <Route path="/analysis" element={<Analysis />} />
             </Routes>
           </Router>
         </div>

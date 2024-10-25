@@ -3,7 +3,8 @@ const User = require("../models/user")
 
 const middleware = async (req,res,next) => {
     try {
-    const token = req.cookies.access_token;
+    const token = req.headers["authorization"].split(" ")[1];
+
     if (!token) { 
         return res.status(401).json({ success: false, msg: "No token, authorization denied" });
     }

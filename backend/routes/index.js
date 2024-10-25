@@ -3,6 +3,7 @@ const authenticationRouter = require('./authenticationRouter');
 const messageRouter = require('./messageRouter');
 const userRouter = require('./userRouter');
 const authenticate = require('../middleware/middleware');
+const analysisRouter = require('./analysisRouter');
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.get("/me", authenticate, async (req, res) => {
 router.use("/v1/auth", authenticationRouter);
 router.use("/v1/message", messageRouter);
 router.use("/v1/user", userRouter);
+router.use("/v1/analysis", analysisRouter);
 
 module.exports = router;
