@@ -27,3 +27,13 @@
 /backend/yarn.lock
 /backend/package-lock.json
 /backend/.yarn
+
+
+/liboqs-node/node_modules
+/liboqs/liboqs-node/node_modules
+
+/lightweight-crypto/node_modules
+
+/Saturnin-node/node_modules
+
+/

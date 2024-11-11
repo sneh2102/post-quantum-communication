@@ -1,0 +1,1 @@
+cmd_Release/obj.target/test.node := g++ -o Release/obj.target/test.node -shared -pthread -rdynamic -m64  -Wl,-soname=test.node -Wl,--start-group Release/obj.target/test/src/saturnin.o Release/obj.target/test/src/aead-common.o Release/obj.target/test/src/internal-saturnin.o -Wl,--end-group 

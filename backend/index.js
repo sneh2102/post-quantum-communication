@@ -3,7 +3,8 @@ dotenv.config();
 const mongoose = require('mongoose');
 const express = require('express');
 const cors = require('cors');
-const port = process.env.PORT;
+const axios = require('axios');
+const port = 5000;
 const cookies = require('cookie-parser');
 const {app, server} = require('./socke.io/socket');
 const oqs = require('liboqs-node');
@@ -24,16 +25,23 @@ app.use(cors({
 }));
 
 app.get('/', (req, res) => {
-    res.send("Hello, I am up and running");
+    console.log("Request received");
+    axios.get('https://qrng.qbck.io/8de8a8ab-deb9-4d7f-84ab-90ad4ce14b5b/qbck/block/bigint?size=32&length=1')
+        .then((response) => {
+            res.send(response.data);
+        })
+        .catch((err) => {
+            console.log("Error: ", err);
+        });
 });
 
 app.use('/api', require('./routes/index'));
 
 const runSequentialAnalysis = async () => {
     try {
-        await analysis();  // Wait for analysis to complete
         console.log("Analysis completed. Starting signature analysis...");
-        await signatureAnalysis();  // After analysis completes, start signature analysis
+        // await signatureAnalysis();  // After analysis completes, start signature analysis
+        await analysis();  // Wait for analysis to complete
         console.log("Signature analysis completed.");
     } catch (err) {
         console.error("Error during analysis process:", err);
@@ -43,7 +51,7 @@ const runSequentialAnalysis = async () => {
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log("Connected to MongoDB");
-        // runSequentialAnalysis();  // Run analysis and signature analysis sequentially
+        runSequentialAnalysis();  // Run analysis and signature analysis sequentially
     })
     .catch((err) => {
         console.log("Error: ", err);

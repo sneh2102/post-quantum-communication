@@ -1,33 +1,38 @@
 const oqs = require('liboqs-node');
-const SignatureAnalysis = require('../models/signatureAnalysis');
 const microtime = require('microtime');
+const fs = require('fs');
+const path = require('path');
+const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+// Function to generate random messages
+const randomMessages = (length) => {
+    let message = "";
+    while (message.length < length) {
+        message += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return message;
+};
 
 const signAnalysis = async () => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-    // Function to generate random messages
-    const randomMessages = (length) => {
-        let message = "";
-        while (message.length < length) {
-            message += characters.charAt(Math.floor(Math.random() * characters.length));
-        }
-        return message;
-    };
-
-    // Create an array of messages (start indexing from 0 for consistency)
-    const messages = [];
-    for (let i = 0; i < 50; i++) {
-        messages[i] = Buffer.from(`${randomMessages((i + 1) * 20)}`, 'utf-8');
-    }
-
     console.log("Signature analysis is running");
 
     const sigsLength = oqs.Sigs.getEnabledAlgorithms().length;
     const signatures = oqs.Sigs.getEnabledAlgorithms();
+    console.log(signatures)
+
+    // Prepare CSV headers
+    const csvFilePath = path.join(__dirname, 'signature_analysis_results_cont.csv');
+    const csvFamilyPath = path.join(__dirname, 'signature_analysis_results_family_cont.csv');
+    const csvFamilyHeaders = "AlgorithmFamily,Variant,ClientKeyPairGenerationTime,SignTime,VerifyTime,CycleTime,MessageLength,SignatureLength\n";
+    const headers = "Algorithm,PublicKeyLength,SecretKeyLength,ClientKeyPairGenerationTime,MessageLength,SignatureLength,SignTime,VerifyTime,CycleTime,NISTLevel\n";
+    fs.writeFileSync(csvFilePath, headers);
+    fs.writeFileSync(csvFamilyPath, csvFamilyHeaders);
 
     for (let i = 0; i < sigsLength; i++) {
         console.log(`Algorithm: ${signatures[i]}`);
-        for (let j = 0; j < 50; j++) {
+
+        for (let j = 0; j < 100; j++) {
+            let messageToSign = null
             const cycleTimeStart = microtime.now();
 
             // Create signature instance for client
@@ -36,48 +41,47 @@ const signAnalysis = async () => {
             const clientKeyPair = clientSig.generateKeypair();
             const clientSecretKey = clientSig.exportSecretKey();
             const clientEndTime = microtime.now();
-            const clientKeyPairGenerationTime = clientEndTime - clientStartTime;
-
+            
             // Get the message to sign
-            const messageToSign = messages[j]; 
+            messageToSign = Buffer.from(`${randomMessages((j + 1) * 200000 )}`, 'utf-8');
+            
             // Sign the message
             const signStartTime = microtime.now();
-            const signature = clientSig.sign(messageToSign);  // Using the correct message buffer
+            const signature = clientSig.sign(messageToSign);
             const signEndTime = microtime.now();
-            const signTime = signEndTime - signStartTime;
-
+            
             // Verify the signature
             const verifyStartTime = microtime.now();
             const isVerified = clientSig.verify(messageToSign, signature, clientKeyPair);
             const verifyEndTime = microtime.now();
-            const verifyTime = verifyEndTime - verifyStartTime;
-
-            // Error handling in case signature verification fails
+            
             if (!isVerified) {
                 console.error(`Signature verification failed for algorithm ${signatures[i]}`);
             }
-
+            
             const cycleTimeEnd = microtime.now();
+            
+            const clientKeyPairGenerationTime = clientEndTime - clientStartTime;
+            const signTime = signEndTime - signStartTime;
+            const verifyTime = verifyEndTime - verifyStartTime;
             const cycleTime = cycleTimeEnd - cycleTimeStart;
 
-            // Save the analysis data
-            const analysis = new SignatureAnalysis({
-                algorithm: signatures[i],
-                publicKeyLength: clientKeyPair.length,
-                secretKeyLength: clientSecretKey.length,
-                clientKeyPairGenerationTime: clientKeyPairGenerationTime,
-                message: messageToSign.toString(),
-                messageLength: messageToSign.length,
-                signatureLength: signature.length,
-                signTime: signTime,
-                signature: signature.toString('hex'),
-                verifyTime: verifyTime,
-                cycleTime: cycleTime,
-                nistLevel: clientSig.getDetails().claimedNistLevel,
-                signatureVerified: isVerified
-            });
+            // Construct analysis data row for CSV
+            const csvRow = `${signatures[i]},${clientKeyPair.length},${clientSecretKey.length},${clientKeyPairGenerationTime},${messageToSign.length},${signature.length},${signTime},${verifyTime},${cycleTime},${clientSig.getDetails().claimedNistLevel}\n`;
+            fs.appendFileSync(csvFilePath, csvRow);
 
-            await analysis.save();
+            const algorithmFamily = signatures[i].includes('DILITHIUM') ? 'Dilithium' : 
+                                    signatures[i].includes('Falcon') ? 'Falcon' : 
+                                    signatures[i].includes('picnic') ? 'Picnic' : 
+                                    signatures[i].includes('Rainbow') ? 'Rainbow' : 
+                                    signatures[i].includes('SPHINCS+') ? 'SPHINCS' : 
+                                    signatures[i].includes('qTesla') ? 'qTesla' : 'Unknown';
+
+            // Construct family CSV row as a string
+            const csvFamilyRow = `${algorithmFamily},${signatures[i]},${clientKeyPairGenerationTime},${signTime},${verifyTime},${cycleTime},${messageToSign.length},${signature.length}\n`;
+            fs.appendFileSync(csvFamilyPath, csvFamilyRow);
+            // console.log(csvFamilyRow)
+
         }
     }
     console.log("Signature analysis completed");
